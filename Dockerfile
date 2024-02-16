@@ -1,15 +1,25 @@
-FROM ubuntu:20.04 as base
+FROM ubuntu:20.04 AS base
 
 # MongoDB download URL
-ARG DB_URL=https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2004-4.4.12.tgz
+ARG DB_URL=https://repo.mongodb.org/apt/ubuntu/dists/focal/mongodb-org/7.0/multiverse/binary-arm64/mongodb-org-server_7.0.5_arm64.deb
+ARG SHELL_URL=https://downloads.mongodb.com/compass/mongosh-2.1.4-linux-arm64.tgz
 
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y curl && \
+    apt-get install -y curl tzdata && \
+    apt-get clean && \
     curl -OL ${DB_URL} && \
-    tar -zxvf mongodb-linux-x86_64-ubuntu2004-4.4.12.tgz && \
-    mv ./mongodb-linux-x86_64-ubuntu2004-4.4.12/bin/* /usr/local/bin/ && \
-    rm -rf ./mongodb-linux-x86_64-ubuntu2004-4.4.12 && rm ./mongodb-linux-x86_64-ubuntu2004-4.4.12.tgz
+    dpkg -i mongodb-org-server_7.0.5_arm64.deb && \
+    rm mongodb-org-server_7.0.5_arm64.deb && \
+    curl -OL ${SHELL_URL} && \
+    tar -zxvf mongosh-2.1.4-linux-arm64.tgz && \
+    chmod +x mongosh-2.1.4-linux-arm64/bin/mongosh && \
+    cp mongosh-2.1.4-linux-arm64/bin/mongosh /usr/local/bin/ && \
+    cp mongosh-2.1.4-linux-arm64/bin/mongosh_crypt_v1.so /usr/local/lib/ && \
+    rm -r mongosh-2.1.4-linux-arm64 && \
+    rm mongosh-2.1.4-linux-arm64.tgz
+
+ENV PATH="/usr/local/bin:${PATH}"
 
 COPY ./init-mongodbs.sh ./init-replica.sh ./entry-point.sh /
 
